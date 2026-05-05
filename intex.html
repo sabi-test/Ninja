@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Registre Ninja</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: "Trebuchet MS", sans-serif;
+    background: #1a1a1a;
+    color: #fff;
+}
+
+header {
+    background: #2b1d0e;
+    padding: 15px;
+    text-align: center;
+    font-size: 24px;
+    letter-spacing: 2px;
+}
+
+.tabs {
+    display: flex;
+    justify-content: center;
+    background: #3a2a1a;
+}
+
+.tab {
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+.tab.active {
+    background: #6b4b2a;
+}
+
+.container {
+    padding: 20px;
+}
+
+form {
+    background: #2b1d0e;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+}
+
+input, textarea, select {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 5px;
+}
+
+button {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.card {
+    background: #f4e4c1;
+    color: black;
+    width: 250px;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.search {
+    margin-bottom: 10px;
+}
+span.chakra-tag {
+    background: #3a2a1a;
+    color: white;
+    padding: 2px 6px;
+    margin: 2px;
+    display: inline-block;
+    border-radius: 5px;
+    font-size: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<header>📜 Registre Ninja</header>
+
+<div class="tabs">
+    <div class="tab active" onclick="changeTab('Konoha')">Konoha</div>
+    <div class="tab" onclick="changeTab('Suna')">Suna</div>
+    <div class="tab" onclick="changeTab('Autres')">Autres</div>
+</div>
+
+<div class="container">
+
+<input type="text" id="search" class="search" placeholder="🔍 Rechercher un ninja..." oninput="displayNinjas()">
+
+<form id="ninjaForm">
+    <input type="text" id="nom" placeholder="Nom / Prénom" required>
+<select id="grade">
+    <option value="">-- Grade --</option>
+    <option>Genin</option>
+    <option>Chuunin</option>
+    <option>Konin</option>
+    <option>Tokubetsu Jonin</option>
+    <option>Jonin</option>
+    <option>Commandant Jonin</option>
+    <option>Kage</option>
+</select>
+    <input type="text" id="section" placeholder="Section">
+    <input type="text" id="chakra" placeholder="Natures de chakra (séparées par des virgules)">
+    <input type="text" id="kekkei" placeholder="Kekkei Genkai">
+    <textarea id="divers" placeholder="Divers"></textarea>
+    <input type="file" id="image">
+    <button type="submit">Ajouter / Modifier</button>
+</form>
+
+<div class="cards" id="cards"></div>
+
+</div>
+
+<script>
+let ninjas = JSON.parse(localStorage.getItem("ninjas")) || [];
+let currentTab = "Konoha";
+let editIndex = null;
+
+function changeTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    event.target.classList.add("active");
+    displayNinjas();
+}
+
+document.getElementById("ninjaForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const file = document.getElementById("image").files[0];
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function() {
+            saveNinja(reader.result);
+        };
+        reader.readAsDataURL(file);
+    } else {
+        saveNinja(null);
+    }
+});
+
+function saveNinja(imageData) {
+
+    let existingImage = null;
+
+    if (editIndex !== null) {
+        existingImage = ninjas[editIndex].image;
+    }
+
+    const ninja = {
+        nom: document.getElementById("nom").value,
+        grade: document.getElementById("grade").value,
+        section: document.getElementById("section").value,
+        chakra: document.getElementById("chakra").value,
+        kekkei: document.getElementById("kekkei").value,
+        divers: document.getElementById("divers").value,
+        village: currentTab,
+        image: imageData || existingImage
+    };
+
+    if (editIndex !== null) {
+        ninjas[editIndex] = ninja;
+        editIndex = null;
+    } else {
+        ninjas.push(ninja);
+    }
+
+    localStorage.setItem("ninjas", JSON.stringify(ninjas));
+    document.getElementById("ninjaForm").reset();
+    displayNinjas();
+}
+    };
+
+    if (editIndex !== null) {
+        ninjas[editIndex] = ninja;
+        editIndex = null;
+    } else {
+        ninjas.push(ninja);
+    }
+
+    localStorage.setItem("ninjas", JSON.stringify(ninjas));
+    document.getElementById("ninjaForm").reset();
+    displayNinjas();
+}
+
+function displayNinjas() {
+    const container = document.getElementById("cards");
+    container.innerHTML = "";
+
+    const search = document.getElementById("search").value.toLowerCase();
+
+    ninjas.forEach((ninja, index) => {
+        if (ninja.village === currentTab && ninja.nom.toLowerCase().includes(search)) {
+
+            const card = document.createElement("div");
+            card.className = "card";
+
+            card.innerHTML = `
+                ${ninja.image ? `<img src="${ninja.image}">` : ""}
+                <h3>${ninja.nom}</h3>
+                <p><b>Grade:</b> ${ninja.grade}</p>
+                <p><b>Section:</b> ${ninja.section}</p>
+                <p><b>Chakra:</b> ${
+    ninja.chakra
+    ? ninja.chakra.split(',').map(c => `<span class="chakra-tag">${c.trim()}</span>`).join('')
+    : ''
+}</p>
+                <p><b>Kekkei Genkai:</b> ${ninja.kekkei}</p>
+                <p>${ninja.divers}</p>
+
+                <div class="actions">
+                    <button onclick="editNinja(${index})">✏️</button>
+                    <button onclick="deleteNinja(${index})">❌</button>
+                </div>
+            `;
+
+            container.appendChild(card);
+        }
+    });
+}
+
+function deleteNinja(index) {
+    ninjas.splice(index, 1);
+    localStorage.setItem("ninjas", JSON.stringify(ninjas));
+    displayNinjas();
+}
+
+function editNinja(index) {
+    const n = ninjas[index];
+    document.getElementById("nom").value = n.nom;
+    document.getElementById("grade").value = n.grade;
+    document.getElementById("section").value = n.section;
+    document.getElementById("chakra").value = n.chakra;
+    document.getElementById("kekkei").value = n.kekkei;
+    document.getElementById("divers").value = n.divers;
+
+    editIndex = index;
+}
+
+displayNinjas();
+</script>
+
+</body>
+</html>
